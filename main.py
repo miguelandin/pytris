@@ -13,6 +13,8 @@ BLOCK_YELLOW_PIECE = ((0, 0), (1, 0), (0, 1), (1, 1))
 # map
 BOARD_WIDTH = 10
 BOARD_HEIGHT = 20
+
+# game
 SPAWN_CORDS = (3, -3)
 MAX_UPWARDS = 3
 
@@ -25,10 +27,10 @@ PURPLE = (128, 0, 128)
 BLUE = (0, 0, 255)
 YELLOW = (255, 255, 0)
 
-tile = {"SPACE": 0, "ORANGE": 1, "CYAN": 2,
-        "GREEN": 3, "RED": 4, "PURPLE": 5, "BLUE": 6}
+TILES = {"SPACE": 0, "ORANGE": 1, "CYAN": 2,
+         "GREEN": 3, "RED": 4, "PURPLE": 5, "BLUE": 6}
 
-board = [[tile["SPACE"]
+board = [[TILES["SPACE"]
           for _ in range(BOARD_WIDTH)] for _ in range(BOARD_HEIGHT)]
 
 
@@ -36,7 +38,7 @@ def is_coliding(piece_blocks, board: list):
     for x, y in piece_blocks:
         if x < 0 or x >= BOARD_WIDTH or y >= BOARD_HEIGHT:
             return True
-        if y >= 0 and not board[y][x] == tile["SPACE"]:
+        if y >= 0 and not board[y][x] == TILES["SPACE"]:
             return True
     return False
 
@@ -52,19 +54,19 @@ def find_space(piece_blocks, board: list, iteration: int):
 
 
 class Piece:
-    def __init__(self, piece_blocks: tuple, color: tuple[int, int, int], init_pos: tuple[int, int]):
+    def __init__(self, piece_blocks: tuple, tile: str, init_pos: tuple[int, int]):
         i_x, i_y = init_pos
         self.piece_blocks = tuple([(x + i_x, y + i_y)
                                    for x, y in piece_blocks])
-        self.color = color
+        self.color = tile
 
     def move_down(self, board: list):
         new_piece_blocks = tuple([(x, y + 1) for x, y in self.piece_blocks])
         if not is_coliding(new_piece_blocks, board):
             self.piece_blocks = new_piece_blocks
-            return True
-        else:
             return False
+        else:
+            return True
 
     def move_left(self, board: list):
         new_piece_blocks = tuple([(x - 1, y) for x, y in self.piece_blocks])
@@ -89,71 +91,111 @@ class Piece:
 
 class LOrangePiece(Piece):
     def __init__(self):
-        super().__init__(L_ORANGE_PIECE, ORANGE, SPAWN_CORDS)
+        super().__init__(L_ORANGE_PIECE, "ORANGE", SPAWN_CORDS)
 
 
 class LCyanPiece(Piece):
     def __init__(self):
-        super().__init__(L_CYAN_PIECE, CYAN, SPAWN_CORDS)
+        super().__init__(L_CYAN_PIECE, "CYAN", SPAWN_CORDS)
 
 
 class SkewGreenPiece(Piece):
     def __init__(self):
-        super().__init__(SKEW_GREEN_PIECE, GREEN, SPAWN_CORDS)
+        super().__init__(SKEW_GREEN_PIECE, "GREEN", SPAWN_CORDS)
 
 
 class SkewRedPiece(Piece):
     def __init__(self):
-        super().__init__(SKEW_RED_PIECE, RED, SPAWN_CORDS)
+        super().__init__(SKEW_RED_PIECE, "RED", SPAWN_CORDS)
 
 
 class TPurplePiece(Piece):
     def __init__(self):
-        super().__init__(T_PURPLE_PIECE, PURPLE, SPAWN_CORDS)
+        super().__init__(T_PURPLE_PIECE, "PURPLE", SPAWN_CORDS)
 
 
 class IBluePiece(Piece):
     def __init__(self):
-        super().__init__(I_BLUE_PIECE, BLUE, SPAWN_CORDS)
+        super().__init__(I_BLUE_PIECE, "BLUE", SPAWN_CORDS)
 
 
 class BlockYellowPiece(Piece):
     def __init__(self):
-        super().__init__(BLOCK_YELLOW_PIECE, YELLOW, SPAWN_CORDS)
+        super().__init__(BLOCK_YELLOW_PIECE, "YELLOW", SPAWN_CORDS)
 
     def rotate(self, board):
         return
 
 
-# Instances
-pieces = [
-    LOrangePiece(),
-    LCyanPiece(),
-    SkewGreenPiece(),
-    SkewRedPiece(),
-    TPurplePiece(),
-    IBluePiece(),
-    BlockYellowPiece()
-]
+def place_piece(piece: Piece, board: list):
+    for x, y in piece.piece_blocks:
+        board[y][x] = TILES[piece.color]
 
-# 1. Configuración inicial
+
+def calculate_end_coords(piece: Piece, board: list):
+    actual_coords = piece.piece_blocks
+    colision = False
+
+    while not colision:
+        next_coords = [[x, y+1] for x, y in actual_coords]
+        if not is_coliding(next_coords, board):
+            actual_coords = next_coords
+        else:
+            colision = True
+
+    return actual_coords
+
+
+# Instances
+PIECES = (
+    LOrangePiece,
+    LCyanPiece,
+    SkewGreenPiece,
+    SkewRedPiece,
+    TPurplePiece,
+    IBluePiece,
+    BlockYellowPiece
+)
+
 pygame.init()
-pantalla = pygame.display.set_mode((800, 600))
+screen = pygame.display.set_mode((800, 600))
 pygame.display.set_caption("tetris-py")
 clock = pygame.time.Clock()
 running = True
 
-# 2. Bucle principal del juego
+fall_speed = 1000
 while running:
-    # Manejo de eventos (Teclado, ratón, cerrar ventana)
-    for evento in pygame.event.get():
-        if evento.type == pygame.QUIT:
-            running = False
+    piece = random.choice(PIECES)()
+    placed = False
+    time = 0
+    while not placed:
+        for event in pygame.event.get():
+            match event.type:
+                case pygame.QUIT:
+                    running = False
+                case pygame.KEYDOWN:
+                    match event.key:
+                        case pygame.K_DOWN:
+                            if piece.move_down(board):
+                                place_piece(piece, board)
+                                placed = True
+                            time = 0
+                        case pygame.K_LEFT:
+                            piece.move_left(board)
+                        case pygame.K_RIGHT:
+                            piece.move_right(board)
+                        case pygame.K_UP:
+                            piece.rotate(board)
 
-    # Lógica del juego (Aquí van los movimientos)
+        time += 1
+        if time > fall_speed:
+            if piece.move_down(board):
+                place_piece(piece, board)
+                placed = True
+            time = 0
 
     # Renderizado (Dibujo)
-    pantalla.fill((0, 0, 0))  # Color de fondo (RGB)
+    screen.fill((0, 0, 0))  # Color de fondo (RGB)
 
     # Actualizar la pantalla
     pygame.display.flip()
