@@ -14,11 +14,17 @@ BLOCK_YELLOW_PIECE = ((0, 0), (1, 0), (0, 1), (1, 1))
 BOARD_WIDTH = 10
 BOARD_HEIGHT = 20
 
+# pygame
+BLOCK_SIZE = 30
+SCREEN_WIDTH = 1000
+SCREEN_HEIGHT = 500
+
 # game
-SPAWN_CORDS = (3, -3)
+SPAWN_CORDS = (3, 0)
 MAX_UPWARDS = 3
 
 # colors
+WHITE = (0, 0, 0)
 ORANGE = (255, 165, 0)
 CYAN = (0, 255, 255)
 GREEN = (0, 255, 0)
@@ -28,7 +34,10 @@ BLUE = (0, 0, 255)
 YELLOW = (255, 255, 0)
 
 TILES = {"SPACE": 0, "ORANGE": 1, "CYAN": 2,
-         "GREEN": 3, "RED": 4, "PURPLE": 5, "BLUE": 6}
+         "GREEN": 3, "RED": 4, "PURPLE": 5, "BLUE": 6, "YELLOW": 7}
+
+COLORS = {0: WHITE, 1: ORANGE, 2: CYAN, 3: GREEN,
+          4: RED, 5: PURPLE, 6: BLUE, 7: YELLOW}
 
 board = [[TILES["SPACE"]
           for _ in range(BOARD_WIDTH)] for _ in range(BOARD_HEIGHT)]
@@ -146,6 +155,24 @@ def calculate_end_coords(piece: Piece, board: list):
     return actual_coords
 
 
+def draw_board(board: list[list], screen: pygame.Surface):
+    for row in range(len(board)):
+        for col in range(len(board[row])):
+            color = COLORS[board[row][col]]
+            block = pygame.Rect(col * BLOCK_SIZE, row *
+                                BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE)
+            pygame.draw.rect(screen, color, block)
+
+
+def draw_piece(piece: Piece, screen: pygame.Surface):
+    coordinates = piece.piece_blocks
+    color = COLORS[TILES[piece.color]]
+
+    for x, y in coordinates:
+        block = pygame.Rect(x*BLOCK_SIZE, y*BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE)
+        pygame.draw.rect(screen, color, block)
+
+
 # Instances
 PIECES = (
     LOrangePiece,
@@ -158,7 +185,8 @@ PIECES = (
 )
 
 pygame.init()
-screen = pygame.display.set_mode((800, 600))
+screen = pygame.display.set_mode(
+    (BOARD_WIDTH*BLOCK_SIZE, BOARD_HEIGHT*BLOCK_SIZE))
 pygame.display.set_caption("tetris-py")
 clock = pygame.time.Clock()
 running = True
@@ -194,13 +222,9 @@ while running:
                 placed = True
             time = 0
 
-    # Renderizado (Dibujo)
-    screen.fill((0, 0, 0))  # Color de fondo (RGB)
-
-    # Actualizar la pantalla
-    pygame.display.flip()
-
-    # Control de FPS (60 cuadros por segundo)
-    clock.tick(60)
+        draw_board(board, screen)
+        draw_piece(piece, screen)
+        pygame.display.flip()
+        clock.tick(60)
 
 pygame.quit()
