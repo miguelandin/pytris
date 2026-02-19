@@ -32,6 +32,7 @@ RED = (255, 0, 0)
 PURPLE = (128, 0, 128)
 BLUE = (0, 0, 255)
 YELLOW = (255, 255, 0)
+GREY = (85, 85, 85)
 
 TILES = {"SPACE": 0, "ORANGE": 1, "CYAN": 2,
          "GREEN": 3, "RED": 4, "PURPLE": 5, "BLUE": 6, "YELLOW": 7}
@@ -97,6 +98,9 @@ class Piece:
         if final_piece_blocks:
             self.piece_blocks = tuple(final_piece_blocks)
 
+    def insta_down(self, board):
+        self.piece_blocks = calculate_end_coords(self, board)
+
 
 class LOrangePiece(Piece):
     def __init__(self):
@@ -152,7 +156,7 @@ def calculate_end_coords(piece: Piece, board: list):
         else:
             colision = True
 
-    return actual_coords
+    return tuple(actual_coords)
 
 
 def draw_board(board: list[list], screen: pygame.Surface):
@@ -164,13 +168,32 @@ def draw_board(board: list[list], screen: pygame.Surface):
             pygame.draw.rect(screen, color, block)
 
 
-def draw_piece(piece: Piece, screen: pygame.Surface):
-    coordinates = piece.piece_blocks
-    color = COLORS[TILES[piece.color]]
-
-    for x, y in coordinates:
+def draw_piece(coords: tuple, color: tuple, screen: pygame.Surface):
+    for x, y in coords:
         block = pygame.Rect(x*BLOCK_SIZE, y*BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE)
         pygame.draw.rect(screen, color, block)
+
+
+def clear_lines(board: list[list], lines: tuple):
+    for x in lines:
+        board.pop(x)
+        board.insert(0, [0]*BOARD_WIDTH)
+
+
+def find_lines(board: list[list]):
+    lines: list[int] = []
+    for row in range(len(board)):
+        line = True
+        col = 0
+        while col in range(len(board[row])) and line:
+            if board[row][col] == 0:
+                line = False
+            else:
+                col += 1
+        if line is True:
+            lines.append(row)
+
+    return tuple(lines)
 
 
 # Instances
@@ -191,7 +214,7 @@ pygame.display.set_caption("tetris-py")
 clock = pygame.time.Clock()
 running = True
 
-fall_speed = 1000
+fall_speed = 100
 while running:
     piece = random.choice(PIECES)()
     placed = False
@@ -208,6 +231,11 @@ while running:
                                 place_piece(piece, board)
                                 placed = True
                             time = 0
+                        case pygame.K_SPACE:
+                            piece.insta_down(board)
+                            place_piece(piece, board)
+                            placed = True
+                            time = 0
                         case pygame.K_LEFT:
                             piece.move_left(board)
                         case pygame.K_RIGHT:
@@ -221,9 +249,10 @@ while running:
                 place_piece(piece, board)
                 placed = True
             time = 0
-
+        clear_lines(board, find_lines(board))
         draw_board(board, screen)
-        draw_piece(piece, screen)
+        draw_piece(calculate_end_coords(piece, board), GREY, screen)
+        draw_piece(piece.piece_blocks, COLORS[TILES[piece.color]], screen)
         pygame.display.flip()
         clock.tick(60)
 
