@@ -22,6 +22,8 @@ SCREEN_HEIGHT = 500
 # game
 SPAWN_CORDS = (3, 0)
 MAX_UPWARDS = 3
+FALL_TIMER = 100
+KEY_COOLDOWN = 100
 
 # colors
 WHITE = (0, 0, 0)
@@ -44,7 +46,7 @@ board = [[TILES["SPACE"]
           for _ in range(BOARD_WIDTH)] for _ in range(BOARD_HEIGHT)]
 
 
-def is_coliding(piece_blocks, board: list):
+def is_coliding(piece_blocks, board: list[list]):
     for x, y in piece_blocks:
         if x < 0 or x >= BOARD_WIDTH or y >= BOARD_HEIGHT:
             return True
@@ -53,7 +55,7 @@ def is_coliding(piece_blocks, board: list):
     return False
 
 
-def find_space(piece_blocks, board: list, iteration: int):
+def find_space(piece_blocks, board: list[list], iteration: int):
     if iteration == MAX_UPWARDS:
         return None
     if not is_coliding(piece_blocks, board):
@@ -70,7 +72,7 @@ class Piece:
                                    for x, y in piece_blocks])
         self.color = tile
 
-    def move_down(self, board: list):
+    def move_down(self, board: list[list]):
         new_piece_blocks = tuple([(x, y + 1) for x, y in self.piece_blocks])
         if not is_coliding(new_piece_blocks, board):
             self.piece_blocks = new_piece_blocks
@@ -78,12 +80,12 @@ class Piece:
         else:
             return True
 
-    def move_left(self, board: list):
+    def move_left(self, board: list[list]):
         new_piece_blocks = tuple([(x - 1, y) for x, y in self.piece_blocks])
         if not is_coliding(new_piece_blocks, board):
             self.piece_blocks = new_piece_blocks
 
-    def move_right(self, board: list):
+    def move_right(self, board: list[list]):
         new_piece_blocks = tuple([(x + 1, y) for x, y in self.piece_blocks])
         if not is_coliding(new_piece_blocks, board):
             self.piece_blocks = new_piece_blocks
@@ -140,12 +142,12 @@ class BlockYellowPiece(Piece):
         return
 
 
-def place_piece(piece: Piece, board: list):
+def place_piece(piece: Piece, board: list[list]):
     for x, y in piece.piece_blocks:
         board[y][x] = TILES[piece.color]
 
 
-def calculate_end_coords(piece: Piece, board: list):
+def calculate_end_coords(piece: Piece, board: list[list]):
     actual_coords = piece.piece_blocks
     colision = False
 
@@ -207,6 +209,15 @@ PIECES = (
     BlockYellowPiece
 )
 
+
+def get_random_piece(pieces: list):
+    if len(pieces) <= 5:
+        new_pieces = list(PIECES)
+        random.shuffle(new_pieces)
+        pieces.extend(new_pieces)
+    return pieces.pop(0)()
+
+
 pygame.init()
 screen = pygame.display.set_mode(
     (BOARD_WIDTH*BLOCK_SIZE, BOARD_HEIGHT*BLOCK_SIZE))
@@ -214,46 +225,82 @@ pygame.display.set_caption("tetris-py")
 clock = pygame.time.Clock()
 running = True
 
-fall_speed = 100
-while running:
-    piece = random.choice(PIECES)()
-    placed = False
-    time = 0
-    while not placed:
-        for event in pygame.event.get():
-            match event.type:
-                case pygame.QUIT:
-                    running = False
-                case pygame.KEYDOWN:
-                    match event.key:
-                        case pygame.K_DOWN:
-                            if piece.move_down(board):
-                                place_piece(piece, board)
-                                placed = True
-                            time = 0
-                        case pygame.K_SPACE:
-                            piece.insta_down(board)
-                            place_piece(piece, board)
-                            placed = True
-                            time = 0
-                        case pygame.K_LEFT:
-                            piece.move_left(board)
-                        case pygame.K_RIGHT:
-                            piece.move_right(board)
-                        case pygame.K_UP:
-                            piece.rotate(board)
+end_cooldown = pygame.USEREVENT + 1
+cooldown = False
 
-        time += 1
-        if time > fall_speed:
+time = 0
+placed = False
+can_swap = True
+pieces: list = []
+piece: Piece = get_random_piece(pieces)
+hold_piece = None
+
+while True:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            exit()
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_q:
+                pygame.quit()
+                exit()
+            elif event.key == pygame.K_SPACE:
+                piece.insta_down(board)
+                place_piece(piece, board)
+                piece = get_random_piece(pieces)
+                time = 0
+                placed = True
+            elif event.key == pygame.K_UP:
+                piece.rotate(board)
+                time = 0
+            elif event.key == pygame.K_c:
+                if can_swap:
+                    if hold_piece:
+                        temp_piece = type(piece)
+                        piece = hold_piece()
+                        hold_piece = temp_piece
+                    else:
+                        hold_piece = type(piece)
+                        piece = get_random_piece(pieces)
+                    can_swap = False
+        if event.type == end_cooldown:
+            cooldown = False
+
+    if not cooldown:
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_DOWN]:
             if piece.move_down(board):
                 place_piece(piece, board)
+                piece = get_random_piece(pieces)
+                time = 0
                 placed = True
-            time = 0
-        clear_lines(board, find_lines(board))
-        draw_board(board, screen)
-        draw_piece(calculate_end_coords(piece, board), GREY, screen)
-        draw_piece(piece.piece_blocks, COLORS[TILES[piece.color]], screen)
-        pygame.display.flip()
-        clock.tick(60)
+            cooldown = True
+            pygame.time.set_timer(end_cooldown, KEY_COOLDOWN)
+        elif keys[pygame.K_LEFT]:
+            piece.move_left(board)
+            cooldown = True
+            pygame.time.set_timer(end_cooldown, KEY_COOLDOWN)
+        elif keys[pygame.K_RIGHT]:
+            piece.move_right(board)
+            cooldown = True
+            pygame.time.set_timer(end_cooldown, KEY_COOLDOWN)
 
-pygame.quit()
+    if time > FALL_TIMER:
+        if piece.move_down(board):
+            place_piece(piece, board)
+            piece = get_random_piece(pieces)
+            placed = True
+
+        time = 0
+
+    if placed:
+        clear_lines(board, find_lines(board))
+        placed = False
+        can_swap = True
+
+    draw_board(board, screen)
+    draw_piece(calculate_end_coords(piece, board), GREY, screen)
+    draw_piece(piece.piece_blocks, COLORS[TILES[piece.color]], screen)
+    pygame.display.flip()
+    clock.tick(60)
+    time += 1
