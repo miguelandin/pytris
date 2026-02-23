@@ -23,7 +23,8 @@ SCREEN_HEIGHT = 500
 SPAWN_CORDS = (3, 0)
 MAX_UPWARDS = 3
 FALL_TIMER = 100
-KEY_COOLDOWN = 100
+DAS_DELAY = 150
+DAS_REPEAT = 50
 
 # colors
 WHITE = (0, 0, 0)
@@ -225,10 +226,10 @@ pygame.display.set_caption("tetris-py")
 clock = pygame.time.Clock()
 running = True
 
-end_cooldown = pygame.USEREVENT + 1
-cooldown = False
-
 time = 0
+das_timer = 0
+das_activate = False
+current_direction = None
 placed = False
 can_swap = True
 pieces: list = []
@@ -263,27 +264,30 @@ while True:
                         hold_piece = type(piece)
                         piece = get_random_piece(pieces)
                     can_swap = False
-        if event.type == end_cooldown:
-            cooldown = False
+            elif event.key in (pygame.K_LEFT, pygame.K_RIGHT):
+                current_direction = event.key
+                das_timer = pygame.time.get_ticks()
+                das_activate = False
+                if event.key == pygame.K_LEFT:
+                    piece.move_left(board)
+                else:
+                    piece.move_right(board)
+        if event.type == pygame.KEYUP:
+            if event.key == current_direction:
+                current_direction = None
 
-    if not cooldown:
-        keys = pygame.key.get_pressed()
-        if keys[pygame.K_DOWN]:
-            if piece.move_down(board):
-                place_piece(piece, board)
-                piece = get_random_piece(pieces)
-                time = 0
-                placed = True
-            cooldown = True
-            pygame.time.set_timer(end_cooldown, KEY_COOLDOWN)
-        elif keys[pygame.K_LEFT]:
-            piece.move_left(board)
-            cooldown = True
-            pygame.time.set_timer(end_cooldown, KEY_COOLDOWN)
-        elif keys[pygame.K_RIGHT]:
-            piece.move_right(board)
-            cooldown = True
-            pygame.time.set_timer(end_cooldown, KEY_COOLDOWN)
+    if current_direction:
+        current_time = pygame.time.get_ticks()
+        delay_needed = DAS_REPEAT if das_activate else DAS_DELAY
+
+        if current_time - das_timer > delay_needed:
+            if current_direction == pygame.K_LEFT:
+                piece.move_left(board)
+            else:
+                piece.move_right(board)
+
+            das_timer = current_time
+            das_activate = True
 
     if time > FALL_TIMER:
         if piece.move_down(board):
