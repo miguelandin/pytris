@@ -1,5 +1,7 @@
 import pygame
 import random
+import moderngl
+from array import array
 
 # pieces init coords
 L_ORANGE_PIECE = ((1, 1), (0, 1), (2, 1), (2, 0))
@@ -37,14 +39,20 @@ BLUE = (0, 0, 255)
 YELLOW = (255, 255, 0)
 GREY = (85, 85, 85)
 
-TILES = {"SPACE": 0, "ORANGE": 1, "CYAN": 2,
-         "GREEN": 3, "RED": 4, "PURPLE": 5, "BLUE": 6, "YELLOW": 7}
+TILES = {
+    "SPACE": 0,
+    "ORANGE": 1,
+    "CYAN": 2,
+    "GREEN": 3,
+    "RED": 4,
+    "PURPLE": 5,
+    "BLUE": 6,
+    "YELLOW": 7,
+}
 
-COLORS = {0: WHITE, 1: ORANGE, 2: CYAN, 3: GREEN,
-          4: RED, 5: PURPLE, 6: BLUE, 7: YELLOW}
+COLORS = {0: WHITE, 1: ORANGE, 2: CYAN, 3: GREEN, 4: RED, 5: PURPLE, 6: BLUE, 7: YELLOW}
 
-board = [[TILES["SPACE"]
-          for _ in range(BOARD_WIDTH)] for _ in range(BOARD_HEIGHT)]
+board = [[TILES["SPACE"] for _ in range(BOARD_WIDTH)] for _ in range(BOARD_HEIGHT)]
 
 
 def is_coliding(piece_blocks, board: list[list]):
@@ -62,15 +70,14 @@ def find_space(piece_blocks, board: list[list], iteration: int):
     if not is_coliding(piece_blocks, board):
         return piece_blocks
     else:
-        new_piece_blocks = [[x, y-1] for x, y in piece_blocks]
+        new_piece_blocks = [[x, y - 1] for x, y in piece_blocks]
         return find_space(new_piece_blocks, board, iteration + 1)
 
 
 class Piece:
     def __init__(self, piece_blocks: tuple, tile: str, init_pos: tuple[int, int]):
         i_x, i_y = init_pos
-        self.piece_blocks = tuple([(x + i_x, y + i_y)
-                                   for x, y in piece_blocks])
+        self.piece_blocks = tuple([(x + i_x, y + i_y) for x, y in piece_blocks])
         self.color = tile
 
     def move_down(self, board: list[list]):
@@ -153,7 +160,7 @@ def calculate_end_coords(piece: Piece, board: list[list]):
     colision = False
 
     while not colision:
-        next_coords = [[x, y+1] for x, y in actual_coords]
+        next_coords = [[x, y + 1] for x, y in actual_coords]
         if not is_coliding(next_coords, board):
             actual_coords = next_coords
         else:
@@ -165,22 +172,25 @@ def calculate_end_coords(piece: Piece, board: list[list]):
 def draw_board(board: list[list], screen: pygame.Surface):
     for row in range(len(board)):
         for col in range(len(board[row])):
+            if board[row][col] == 0:
+                continue
             color = COLORS[board[row][col]]
-            block = pygame.Rect(col * BLOCK_SIZE, row *
-                                BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE)
+            block = pygame.Rect(
+                col * BLOCK_SIZE, row * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE
+            )
             pygame.draw.rect(screen, color, block)
 
 
 def draw_piece(coords: tuple, color: tuple, screen: pygame.Surface):
     for x, y in coords:
-        block = pygame.Rect(x*BLOCK_SIZE, y*BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE)
+        block = pygame.Rect(x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE)
         pygame.draw.rect(screen, color, block)
 
 
 def clear_lines(board: list[list], lines: tuple):
     for x in lines:
         board.pop(x)
-        board.insert(0, [0]*BOARD_WIDTH)
+        board.insert(0, [0] * BOARD_WIDTH)
 
 
 def find_lines(board: list[list]):
@@ -207,7 +217,7 @@ PIECES = (
     SkewRedPiece,
     TPurplePiece,
     IBluePiece,
-    BlockYellowPiece
+    BlockYellowPiece,
 )
 
 
@@ -221,7 +231,9 @@ def get_random_piece(pieces: list):
 
 pygame.init()
 screen = pygame.display.set_mode(
-    (BOARD_WIDTH*BLOCK_SIZE, BOARD_HEIGHT*BLOCK_SIZE))
+    (BOARD_WIDTH * BLOCK_SIZE, BOARD_HEIGHT * BLOCK_SIZE),
+    pygame.OPENGL | pygame.DOUBLEBUF,
+)
 pygame.display.set_caption("tetris-py")
 clock = pygame.time.Clock()
 running = True
@@ -235,6 +247,87 @@ can_swap = True
 pieces: list = []
 piece: Piece = get_random_piece(pieces)
 hold_piece = None
+
+display = pygame.Surface(screen.get_size(), pygame.SRCALPHA)
+ctx = moderngl.create_context()
+# fmt: off
+buffer = ctx.buffer(data=array("f",[
+    -1.0,1.0,0.0,0.0,  # topleft
+   1.0,1.0,1.0,0.0,  # topright
+    -1.0,-1.0,0.0,1.0,  # bottomleft
+    1.0,-1.0,1.0,1.0,  # bottomright
+]))
+# fmt: on
+
+vertex_shader = """
+#version 330 core
+in vec2 vertex;
+in vec2 screen_coords;
+out vec2 uvs;
+
+void main() {
+    uvs = screen_coords;
+    gl_Position = vec4(vertex, 0.0, 1.0);
+}
+"""
+
+fragment_shader = """
+#version 330 core
+in vec2 uvs;
+out vec4 color;
+
+uniform float tiempo;
+uniform sampler2D display;
+
+#define PI 3.14159265359
+
+void main() {
+    // 1. VELOCIDAD REDUCIDA
+    // Bajamos el multiplicador de tiempo de 0.5 a 0.1 para un movimiento lento
+    float t = tiempo * 0.15;
+    vec2 uv = uvs * 2.0 - 1.0;
+
+    // Generación de ondas (Plasma)
+    float v = sin(uv.x * 7.0 + t);
+    v += sin((uv.y * 8.0 + t) / 2.0);
+    v += sin((uv.x * 9.0 + uv.y * 9.0 + t) / 2.0);
+    
+    uv += vec2(sin(t * 0.2), cos(t * 0.1)) * 0.5;
+    v += sin(sqrt(80.0 * (uv.x * uv.x + uv.y * uv.y)) + t);
+
+    // 2. PALETA SOLO ROJOS
+    // Usamos el valor de 'v' para oscilar solo en el canal Rojo
+    // Los canales G y B se quedan en 0 (o valores muy bajos para dar profundidad)
+    vec3 color_fondo;
+    color_fondo.r = 0.3 + 0.7 * sin(v * PI * 0.5); // Oscila entre rojo oscuro y brillante
+    color_fondo.g = 0.02 * sin(v * PI);            // Un toque ínfimo de verde para matizar
+    color_fondo.b = 0.02;                          // Un azul casi negro
+
+    // Oscurecemos el fondo general para que el Tetris resalte (estilo Balatro)
+    color_fondo *= 0.4;
+
+    // 3. SCANLINES (Efecto CRT)
+    float scanline = sin(uvs.y * 600.0) * 0.03;
+    color_fondo -= scanline;
+
+    // 4. MEZCLA CON EL JUEGO
+    vec4 game_layer = texture(display, uvs);
+    
+    // El juego se mantiene con sus colores originales, el fondo es el que cambia
+    vec3 color_final = mix(color_fondo, game_layer.rgb, game_layer.a);
+    
+    color = vec4(color_final, 1.0);
+}
+"""
+
+program = ctx.program(vertex_shader=vertex_shader, fragment_shader=fragment_shader)
+render_object = ctx.vertex_array(
+    program, [(buffer, "2f 2f", "vertex", "screen_coords")]
+)
+display_texture = ctx.texture(display.get_size(), 4, display.get_view("1"))
+display_texture.swizzle = "BGRA"
+display_texture.filter = (moderngl.NEAREST, moderngl.NEAREST)
+
 
 while True:
     for event in pygame.event.get():
@@ -302,9 +395,17 @@ while True:
         placed = False
         can_swap = True
 
-    draw_board(board, screen)
-    draw_piece(calculate_end_coords(piece, board), GREY, screen)
-    draw_piece(piece.piece_blocks, COLORS[TILES[piece.color]], screen)
+    display.fill((0, 0, 0, 0))
+    draw_board(board, display)
+    draw_piece(calculate_end_coords(piece, board), GREY, display)
+    draw_piece(piece.piece_blocks, COLORS[TILES[piece.color]], display)
+
+    display_texture.write(display.get_view("1"))
+    display_texture.use(0)
+    program["tiempo"] = pygame.time.get_ticks() / 100
+    program["display"] = 0
+    render_object.render(moderngl.TRIANGLE_STRIP)
+
     pygame.display.flip()
     clock.tick(60)
     time += 1
