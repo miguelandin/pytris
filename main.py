@@ -17,14 +17,14 @@ BOARD_WIDTH = 10
 BOARD_HEIGHT = 20
 
 # pygame
-BLOCK_SIZE = 30
+BLOCK_SIZE = 50
 SCREEN_WIDTH = 1000
 SCREEN_HEIGHT = 500
 
 # game
 SPAWN_CORDS = (3, 0)
 MAX_UPWARDS = 3
-FALL_TIMER = 100
+FALL_TIMER = 50
 DAS_DELAY = 150
 DAS_REPEAT = 50
 
@@ -50,9 +50,11 @@ TILES = {
     "YELLOW": 7,
 }
 
-COLORS = {0: WHITE, 1: ORANGE, 2: CYAN, 3: GREEN, 4: RED, 5: PURPLE, 6: BLUE, 7: YELLOW}
+COLORS = {0: WHITE, 1: ORANGE, 2: CYAN, 3: GREEN,
+          4: RED, 5: PURPLE, 6: BLUE, 7: YELLOW}
 
-board = [[TILES["SPACE"] for _ in range(BOARD_WIDTH)] for _ in range(BOARD_HEIGHT)]
+board = [[TILES["SPACE"]
+          for _ in range(BOARD_WIDTH)] for _ in range(BOARD_HEIGHT)]
 
 
 def is_coliding(piece_blocks, board: list[list]):
@@ -77,7 +79,8 @@ def find_space(piece_blocks, board: list[list], iteration: int):
 class Piece:
     def __init__(self, piece_blocks: tuple, tile: str, init_pos: tuple[int, int]):
         i_x, i_y = init_pos
-        self.piece_blocks = tuple([(x + i_x, y + i_y) for x, y in piece_blocks])
+        self.piece_blocks = tuple([(x + i_x, y + i_y)
+                                  for x, y in piece_blocks])
         self.color = tile
 
     def move_down(self, board: list[list]):
@@ -183,7 +186,8 @@ def draw_board(board: list[list], screen: pygame.Surface):
 
 def draw_piece(coords: tuple, color: tuple, screen: pygame.Surface):
     for x, y in coords:
-        block = pygame.Rect(x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE)
+        block = pygame.Rect(x * BLOCK_SIZE, y * BLOCK_SIZE,
+                            BLOCK_SIZE, BLOCK_SIZE)
         pygame.draw.rect(screen, color, block)
 
 
@@ -221,12 +225,12 @@ PIECES = (
 )
 
 
-def get_random_piece(pieces: list):
-    if len(pieces) <= 5:
-        new_pieces = list(PIECES)
+def get_random_piece(queue: list, pieces: tuple):
+    if len(queue) <= 5:
+        new_pieces = list(pieces)
         random.shuffle(new_pieces)
-        pieces.extend(new_pieces)
-    return pieces.pop(0)()
+        queue.extend(new_pieces)
+    return queue.pop(0)()
 
 
 pygame.init()
@@ -245,17 +249,17 @@ current_direction = None
 placed = False
 can_swap = True
 pieces: list = []
-piece: Piece = get_random_piece(pieces)
+piece: Piece = get_random_piece(pieces, PIECES)
 hold_piece = None
 
 display = pygame.Surface(screen.get_size(), pygame.SRCALPHA)
 ctx = moderngl.create_context()
 # fmt: off
 buffer = ctx.buffer(data=array("f",[
-    -1.0,1.0,0.0,0.0,  # topleft
-   1.0,1.0,1.0,0.0,  # topright
-    -1.0,-1.0,0.0,1.0,  # bottomleft
-    1.0,-1.0,1.0,1.0,  # bottomright
+    -1.0, 1.0, 0.0, 0.0,  # topleft
+   1.0, 1.0, 1.0, 0.0,  # topright
+    -1.0, -1.0, 0.0, 1.0,  # bottomleft
+    1.0, -1.0, 1.0, 1.0,  # bottomright
 ]))
 # fmt: on
 
@@ -276,51 +280,71 @@ fragment_shader = """
 in vec2 uvs;
 out vec4 color;
 
-uniform float tiempo;
+uniform float iTime;
+uniform vec2 iResolution;
 uniform sampler2D display;
 
-#define PI 3.14159265359
+// --- CONFIGURACIÓN BALATRO ---
+#define SPIN_ROTATION -2.0
+#define SPIN_SPEED 7.0
+#define OFFSET vec2(0.0)
+#define COLOUR_1 vec4(0.871, 0.267, 0.231, 1.0)
+#define COLOUR_2 vec4(0.0, 0.42, 0.706, 1.0)
+#define COLOUR_3 vec4(0.086, 0.137, 0.145, 1.0)
+#define CONTRAST 3.5
+#define LIGTHING 0.4
+#define SPIN_AMOUNT 0.25
+#define PIXEL_FILTER 500.0
+#define SPIN_EASE 1.0
+#define IS_ROTATE false
+
+vec4 effect(vec2 screenSize, vec2 screen_coords) {
+    float pixel_size = length(screenSize.xy) / PIXEL_FILTER;
+    vec2 uv = (floor(screen_coords.xy*(1./pixel_size))*pixel_size - 0.5*screenSize.xy)/length(screenSize.xy) - OFFSET;
+    float uv_len = length(uv);
+    
+    float speed = (SPIN_ROTATION*SPIN_EASE*0.2);
+    if(IS_ROTATE){
+       speed = iTime * speed;
+    }
+    speed += 302.2;
+    float new_pixel_angle = atan(uv.y, uv.x) + speed - SPIN_EASE*20.*(1.*SPIN_AMOUNT*uv_len + (1. - 1.*SPIN_AMOUNT));
+    vec2 mid = (screenSize.xy/length(screenSize.xy))/2.;
+    uv = (vec2((uv_len * cos(new_pixel_angle) + mid.x), (uv_len * sin(new_pixel_angle) + mid.y)) - mid);
+    
+    uv *= 30.;
+    speed = iTime*(SPIN_SPEED);
+    vec2 uv2 = vec2(uv.x+uv.y);
+    
+    for(int i=0; i < 5; i++) {
+        uv2 += sin(max(uv.x, uv.y)) + uv;
+        uv  += 0.5*vec2(cos(5.1123314 + 0.353*uv2.y + speed*0.131121),sin(uv2.x - 0.113*speed));
+        uv  -= 1.0*cos(uv.x + uv.y) - 1.0*sin(uv.x*0.711 - uv.y);
+    }
+    
+    float contrast_mod = (0.25*CONTRAST + 0.5*SPIN_AMOUNT + 1.2);
+    float paint_res = min(2., max(0.,length(uv)*(0.035)*contrast_mod));
+    float c1p = max(0.,1. - contrast_mod*abs(1.-paint_res));
+    float c2p = max(0.,1. - contrast_mod*abs(paint_res));
+    float c3p = 1. - min(1., c1p + c2p);
+    float light = (LIGTHING - 0.2)*max(c1p*5. - 4., 0.) + LIGTHING*max(c2p*5. - 4., 0.);
+    return (0.3/CONTRAST)*COLOUR_1 + (1. - 0.3/CONTRAST)*(COLOUR_1*c1p + COLOUR_2*c2p + vec4(c3p*COLOUR_3.rgb, c3p*COLOUR_1.a)) + light;
+}
 
 void main() {
-    // 1. VELOCIDAD REDUCIDA
-    // Bajamos el multiplicador de tiempo de 0.5 a 0.1 para un movimiento lento
-    float t = tiempo * 0.15;
-    vec2 uv = uvs * 2.0 - 1.0;
-
-    // Generación de ondas (Plasma)
-    float v = sin(uv.x * 7.0 + t);
-    v += sin((uv.y * 8.0 + t) / 2.0);
-    v += sin((uv.x * 9.0 + uv.y * 9.0 + t) / 2.0);
+    vec2 screen_coords = uvs * iResolution; 
+    vec4 background = effect(iResolution, screen_coords);
     
-    uv += vec2(sin(t * 0.2), cos(t * 0.1)) * 0.5;
-    v += sin(sqrt(80.0 * (uv.x * uv.x + uv.y * uv.y)) + t);
-
-    // 2. PALETA SOLO ROJOS
-    // Usamos el valor de 'v' para oscilar solo en el canal Rojo
-    // Los canales G y B se quedan en 0 (o valores muy bajos para dar profundidad)
-    vec3 color_fondo;
-    color_fondo.r = 0.3 + 0.7 * sin(v * PI * 0.5); // Oscila entre rojo oscuro y brillante
-    color_fondo.g = 0.02 * sin(v * PI);            // Un toque ínfimo de verde para matizar
-    color_fondo.b = 0.02;                          // Un azul casi negro
-
-    // Oscurecemos el fondo general para que el Tetris resalte (estilo Balatro)
-    color_fondo *= 0.4;
-
-    // 3. SCANLINES (Efecto CRT)
-    float scanline = sin(uvs.y * 600.0) * 0.03;
-    color_fondo -= scanline;
-
-    // 4. MEZCLA CON EL JUEGO
     vec4 game_layer = texture(display, uvs);
     
-    // El juego se mantiene con sus colores originales, el fondo es el que cambia
-    vec3 color_final = mix(color_fondo, game_layer.rgb, game_layer.a);
+    vec3 final_color = mix(background.rgb * 0.5, game_layer.rgb, game_layer.a);
     
-    color = vec4(color_final, 1.0);
+    color = vec4(final_color, 1.0);
 }
 """
 
-program = ctx.program(vertex_shader=vertex_shader, fragment_shader=fragment_shader)
+program = ctx.program(vertex_shader=vertex_shader,
+                      fragment_shader=fragment_shader)
 render_object = ctx.vertex_array(
     program, [(buffer, "2f 2f", "vertex", "screen_coords")]
 )
@@ -341,7 +365,7 @@ while True:
             elif event.key == pygame.K_SPACE:
                 piece.insta_down(board)
                 place_piece(piece, board)
-                piece = get_random_piece(pieces)
+                piece = get_random_piece(pieces, PIECES)
                 time = 0
                 placed = True
             elif event.key == pygame.K_UP:
@@ -355,29 +379,36 @@ while True:
                         hold_piece = temp_piece
                     else:
                         hold_piece = type(piece)
-                        piece = get_random_piece(pieces)
+                        piece = get_random_piece(pieces, PIECES)
                     can_swap = False
-            elif event.key in (pygame.K_LEFT, pygame.K_RIGHT):
+            elif event.key in (pygame.K_LEFT, pygame.K_RIGHT, pygame.K_DOWN):
                 current_direction = event.key
                 das_timer = pygame.time.get_ticks()
                 das_activate = False
                 if event.key == pygame.K_LEFT:
                     piece.move_left(board)
-                else:
+                elif event.key == pygame.K_RIGHT:
                     piece.move_right(board)
+                elif event.key == pygame.K_DOWN:
+                    if not piece.move_down(board):
+                        time = 0
+
         if event.type == pygame.KEYUP:
             if event.key == current_direction:
                 current_direction = None
 
     if current_direction:
         current_time = pygame.time.get_ticks()
-        delay_needed = DAS_REPEAT if das_activate else DAS_DELAY
+        delay_needed = DAS_REPEAT if das_activate or current_direction == pygame.K_DOWN else DAS_DELAY
 
         if current_time - das_timer > delay_needed:
             if current_direction == pygame.K_LEFT:
                 piece.move_left(board)
-            else:
+            elif current_direction == pygame.K_RIGHT:
                 piece.move_right(board)
+            elif current_direction == pygame.K_DOWN:
+                if not piece.move_down(board):
+                    time = 0
 
             das_timer = current_time
             das_activate = True
@@ -385,7 +416,7 @@ while True:
     if time > FALL_TIMER:
         if piece.move_down(board):
             place_piece(piece, board)
-            piece = get_random_piece(pieces)
+            piece = get_random_piece(pieces, PIECES)
             placed = True
 
         time = 0
@@ -402,7 +433,8 @@ while True:
 
     display_texture.write(display.get_view("1"))
     display_texture.use(0)
-    program["tiempo"] = pygame.time.get_ticks() / 100
+    program["iTime"] = pygame.time.get_ticks() / 1000.0
+    program["iResolution"] = (BOARD_WIDTH*BLOCK_SIZE, BOARD_HEIGHT*BLOCK_SIZE)
     program["display"] = 0
     render_object.render(moderngl.TRIANGLE_STRIP)
 
