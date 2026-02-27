@@ -7,8 +7,7 @@ from pieces import PIECES
 from pieces import Piece
 
 
-board = [[cf.TILES["SPACE"]
-          for _ in range(cf.BOARD_WIDTH)] for _ in range(cf.BOARD_HEIGHT)]
+board = logics.new_board()
 
 
 def draw_board(board: list[list], screen: pygame.Surface):
@@ -46,7 +45,9 @@ current_direction = None
 placed = False
 can_swap = True
 pieces: list = []
-piece: Piece = logics.get_random_piece(pieces, PIECES)
+piece: Piece
+restart: bool
+piece, restart = logics.get_random_piece(pieces, PIECES, board)
 hold_piece = None
 
 display = pygame.Surface(screen.get_size(), pygame.SRCALPHA)
@@ -89,7 +90,7 @@ while True:
             elif event.key == pygame.K_SPACE:
                 piece.insta_down(board)
                 logics.place_piece(piece, board)
-                piece = logics.get_random_piece(pieces, PIECES)
+                piece, restart = logics.get_random_piece(pieces, PIECES, board)
                 time = 0
                 placed = True
             elif event.key == pygame.K_UP:
@@ -103,7 +104,8 @@ while True:
                         hold_piece = temp_piece
                     else:
                         hold_piece = type(piece)
-                        piece = logics.get_random_piece(pieces, PIECES)
+                        piece, restart = logics.get_random_piece(
+                            pieces, PIECES, board)
                     can_swap = False
             elif event.key in (pygame.K_LEFT, pygame.K_RIGHT, pygame.K_DOWN):
                 current_direction = event.key
@@ -140,7 +142,7 @@ while True:
     if time > cf.FALL_TIMER:
         if piece.move_down(board):
             logics.place_piece(piece, board)
-            piece = logics.get_random_piece(pieces, PIECES)
+            piece, restart = logics.get_random_piece(pieces, PIECES, board)
             placed = True
 
         time = 0
@@ -149,6 +151,9 @@ while True:
         logics.clear_lines(board, logics.find_lines(board))
         placed = False
         can_swap = True
+
+    if restart:
+        board = logics.new_board()
 
     display.fill((0, 0, 0, 0))
     draw_board(board, display)

@@ -1,5 +1,13 @@
 import random
+from typing import TYPE_CHECKING
 import config as cf
+
+if TYPE_CHECKING:
+    from pieces import Piece
+
+
+def new_board():
+    return [[cf.TILES["SPACE"] for _ in range(cf.BOARD_WIDTH)] for _ in range(cf.BOARD_HEIGHT)]
 
 
 def clear_lines(board: list[list], lines: tuple):
@@ -24,12 +32,17 @@ def find_lines(board: list[list]):
     return tuple(lines)
 
 
-def get_random_piece(queue: list, pieces: tuple):
+def get_random_piece(queue: list, pieces: tuple, board: list[list]):
     if len(queue) <= 5:
         new_pieces = list(pieces)
         random.shuffle(new_pieces)
         queue.extend(new_pieces)
-    return queue.pop(0)()
+
+    piece = queue.pop(0)()
+    if is_colliding(piece.piece_blocks, board):
+        return piece, True
+    else:
+        return piece, False
 
 
 def is_colliding(piece_blocks, board: list[list]):
