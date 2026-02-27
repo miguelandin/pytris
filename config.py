@@ -1,0 +1,49 @@
+# pieces init coords
+L_ORANGE_PIECE = ((1, 1), (0, 1), (2, 1), (2, 0))
+L_CYAN_PIECE = ((1, 1), (0, 1), (2, 1), (0, 0))
+SKEW_GREEN_PIECE = ((1, 1), (0, 1), (1, 0), (2, 0))
+SKEW_RED_PIECE = ((1, 1), (0, 0), (1, 0), (2, 1))
+T_PURPLE_PIECE = ((1, 1), (0, 1), (2, 1), (1, 0))
+I_BLUE_PIECE = ((1, 0), (0, 0), (2, 0), (3, 0))
+BLOCK_YELLOW_PIECE = ((0, 0), (1, 0), (0, 1), (1, 1))
+
+# map
+BOARD_WIDTH = 10
+BOARD_HEIGHT = 20
+
+# pygame
+BLOCK_SIZE = 50
+SCREEN_WIDTH = 1000
+SCREEN_HEIGHT = 500
+
+# game
+SPAWN_CORDS = (3, 0)
+MAX_UPWARDS = 3
+FALL_TIMER = 50
+DAS_DELAY = 140
+DAS_REPEAT = 40
+
+# colors
+WHITE = (0, 0, 0)
+ORANGE = (255, 165, 0)
+CYAN = (0, 255, 255)
+GREEN = (0, 255, 0)
+RED = (255, 0, 0)
+PURPLE = (128, 0, 128)
+BLUE = (0, 0, 255)
+YELLOW = (255, 255, 0)
+GREY = (85, 85, 85)
+
+TILES = {
+    "SPACE": 0,
+    "ORANGE": 1,
+    "CYAN": 2,
+    "GREEN": 3,
+    "RED": 4,
+    "PURPLE": 5,
+    "BLUE": 6,
+    "YELLOW": 7,
+}
+
+COLORS = {0: WHITE, 1: ORANGE, 2: CYAN, 3: GREEN,
+          4: RED, 5: PURPLE, 6: BLUE, 7: YELLOW}
