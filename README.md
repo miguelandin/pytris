@@ -16,3 +16,6 @@ source .venv/bin/activate
 pip install -r requirements.txt
 python main.py
 ```
+---
+### Credits
+- Balatro Shaders made by [xxidbr9](https://www.shadertoy.com/user/xxidbr9)
