@@ -1,23 +1,16 @@
 from logics import find_space, is_colliding
 from logics import calculate_end_coords
-from config import SPAWN_CORDS
-
-# pieces init coords
-L_ORANGE_PIECE = ((1, 1), (0, 1), (2, 1), (2, 0))
-L_CYAN_PIECE = ((1, 1), (0, 1), (2, 1), (0, 0))
-SKEW_GREEN_PIECE = ((1, 1), (0, 1), (1, 0), (2, 0))
-SKEW_RED_PIECE = ((1, 1), (0, 0), (1, 0), (2, 1))
-T_PURPLE_PIECE = ((1, 1), (0, 1), (2, 1), (1, 0))
-I_BLUE_PIECE = ((1, 0), (0, 0), (2, 0), (3, 0))
-BLOCK_YELLOW_PIECE = ((0, 0), (1, 0), (0, 1), (1, 1))
+from config import SPAWN_COORDS
 
 
 class Piece:
-    def __init__(self, piece_blocks: tuple, tile: str, init_pos: tuple[int, int]):
-        i_x, i_y = init_pos
+    INIT_COORDS: tuple = ()
+    COLOR: str = ""
+
+    def __init__(self):
+        i_x, i_y = SPAWN_COORDS
         self.piece_blocks = tuple([(x + i_x, y + i_y)
-                                  for x, y in piece_blocks])
-        self.color = tile
+                                  for x, y in self.INIT_COORDS])
 
     def move_down(self, board: list[list]):
         new_piece_blocks = tuple([(x, y + 1) for x, y in self.piece_blocks])
@@ -52,41 +45,41 @@ class Piece:
 
 
 class LOrangePiece(Piece):
-    def __init__(self):
-        super().__init__(L_ORANGE_PIECE, "ORANGE", SPAWN_CORDS)
+    INIT_COORDS = ((1, 1), (0, 1), (2, 1), (2, 0))
+    COLOR = "ORANGE"
 
 
 class LCyanPiece(Piece):
-    def __init__(self):
-        super().__init__(L_CYAN_PIECE, "CYAN", SPAWN_CORDS)
+    INIT_COORDS = ((1, 1), (0, 1), (2, 1), (0, 0))
+    COLOR = "CYAN"
 
 
 class SkewGreenPiece(Piece):
-    def __init__(self):
-        super().__init__(SKEW_GREEN_PIECE, "GREEN", SPAWN_CORDS)
+    INIT_COORDS = ((1, 1), (0, 1), (1, 0), (2, 0))
+    COLOR = "GREEN"
 
 
 class SkewRedPiece(Piece):
-    def __init__(self):
-        super().__init__(SKEW_RED_PIECE, "RED", SPAWN_CORDS)
+    INIT_COORDS = ((1, 1), (0, 0), (1, 0), (2, 1))
+    COLOR = "RED"
 
 
 class TPurplePiece(Piece):
-    def __init__(self):
-        super().__init__(T_PURPLE_PIECE, "PURPLE", SPAWN_CORDS)
+    INIT_COORDS = ((1, 1), (0, 1), (2, 1), (1, 0))
+    COLOR = "PURPLE"
 
 
 class IBluePiece(Piece):
-    def __init__(self):
-        super().__init__(I_BLUE_PIECE, "BLUE", SPAWN_CORDS)
+    INIT_COORDS = ((1, 0), (0, 0), (2, 0), (3, 0))
+    COLOR = "BLUE"
 
 
 class BlockYellowPiece(Piece):
-    def __init__(self):
-        super().__init__(BLOCK_YELLOW_PIECE, "YELLOW", SPAWN_CORDS)
+    INIT_COORDS = ((0, 0), (1, 0), (0, 1), (1, 1))
+    COLOR = "YELLOW"
 
     def rotate(self, board):
-        return
+        pass
 
 
 # Instances

@@ -3,8 +3,7 @@ import moderngl
 import logics
 import config as cf
 from array import array
-from pieces import PIECES
-from pieces import Piece
+from pieces import PIECES, Piece
 
 
 board = logics.new_board()
@@ -27,6 +26,12 @@ def draw_piece(coords: tuple, color: tuple, screen: pygame.Surface):
         block = pygame.Rect(x * cf.BLOCK_SIZE, y * cf.BLOCK_SIZE,
                             cf.BLOCK_SIZE, cf.BLOCK_SIZE)
         pygame.draw.rect(screen, color, block)
+
+
+def draw_hold(hold_piece, screen: pygame.Surface):
+    if hold_piece:
+        coords = hold_piece.INIT_COORDS
+        draw_piece(coords, cf.COLORS[cf.TILES[hold_piece.COLOR]], screen)
 
 
 pygame.init()
@@ -159,7 +164,8 @@ while True:
     draw_board(board, display)
     draw_piece(logics.calculate_end_coords(piece, board), cf.GREY, display)
     draw_piece(piece.piece_blocks,
-               cf.COLORS[cf.TILES[piece.color]], display)
+               cf.COLORS[cf.TILES[piece.COLOR]], display)
+    draw_hold(hold_piece, display)
 
     display_texture.write(display.get_view("1"))
     display_texture.use(0)
