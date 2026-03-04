@@ -3,7 +3,7 @@ import moderngl
 import logics
 import config as cf
 from array import array
-from pieces import PIECES, Piece
+from pieces import Piece, PIECES
 
 
 board = logics.new_board()
@@ -16,27 +16,46 @@ def draw_board(board: list[list], screen: pygame.Surface):
                 continue
             color = cf.COLORS[board[row][col]]
             block = pygame.Rect(
-                col * cf.BLOCK_SIZE, row * cf.BLOCK_SIZE, cf.BLOCK_SIZE, cf.BLOCK_SIZE
-            )
+                (col + cf.MARGIN_SIZE) * cf.BLOCK_SIZE, row *
+                cf.BLOCK_SIZE, cf.BLOCK_SIZE, cf.BLOCK_SIZE)
             pygame.draw.rect(screen, color, block)
 
 
-def draw_piece(coords: tuple, color: tuple, screen: pygame.Surface):
-    for x, y in coords:
-        block = pygame.Rect(x * cf.BLOCK_SIZE, y * cf.BLOCK_SIZE,
+def draw_border(screen: pygame.Surface):
+    left_border = pygame.Rect(
+        (cf.MARGIN_SIZE*cf.BLOCK_SIZE), 0, 1, cf.SCREEN_HEIGHT)
+
+    right_border = pygame.Rect(
+        ((cf.MARGIN_SIZE+cf.BOARD_WIDTH)*cf.BLOCK_SIZE), 0, 1, cf.SCREEN_HEIGHT)
+
+    pygame.draw.rect(screen, cf.WHITE, left_border)
+    pygame.draw.rect(screen, cf.WHITE, right_border)
+
+
+def draw_piece(blocks: tuple, color: tuple, screen: pygame.Surface, coords: tuple):
+    for x, y in blocks:
+        block = pygame.Rect((x + coords[0]) * cf.BLOCK_SIZE, (y + coords[1]) * cf.BLOCK_SIZE,
                             cf.BLOCK_SIZE, cf.BLOCK_SIZE)
         pygame.draw.rect(screen, color, block)
 
 
 def draw_hold(hold_piece, screen: pygame.Surface):
     if hold_piece:
-        coords = hold_piece.INIT_COORDS
-        draw_piece(coords, cf.COLORS[cf.TILES[hold_piece.COLOR]], screen)
+        draw_piece(
+            hold_piece.INIT_COORDS, cf.COLORS[cf.TILES[hold_piece.COLOR]], screen, (1, 1))
+
+
+def draw_next_pieces(pieces: list, screen: pygame.Surface):
+    margin_top = 1
+    for piece in pieces[:5]:
+        draw_piece(piece.INIT_COORDS, cf.COLORS[cf.TILES[piece.COLOR]], screen,
+                   (cf.MARGIN_SIZE + cf.BOARD_WIDTH + 1, margin_top))
+        margin_top += 3
 
 
 pygame.init()
 screen = pygame.display.set_mode(
-    (cf.BOARD_WIDTH * cf.BLOCK_SIZE, cf.BOARD_HEIGHT * cf.BLOCK_SIZE),
+    (cf.SCREEN_WIDTH, cf.SCREEN_HEIGHT),
     pygame.OPENGL | pygame.DOUBLEBUF,
 )
 pygame.display.set_caption("tetris-py")
@@ -159,13 +178,17 @@ while True:
 
     if restart:
         board = logics.new_board()
+        piece, restart = logics.get_random_piece(pieces, PIECES, board)
 
     display.fill((0, 0, 0, 0))
     draw_board(board, display)
-    draw_piece(logics.calculate_end_coords(piece, board), cf.GREY, display)
+    draw_piece(logics.calculate_end_coords(piece, board),
+               cf.GREY, display, (5, 0))
     draw_piece(piece.piece_blocks,
-               cf.COLORS[cf.TILES[piece.COLOR]], display)
+               cf.COLORS[cf.TILES[piece.COLOR]], display, (5, 0))
+    draw_border(display)
     draw_hold(hold_piece, display)
+    draw_next_pieces(pieces, display)
 
     display_texture.write(display.get_view("1"))
     display_texture.use(0)

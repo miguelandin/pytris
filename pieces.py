@@ -82,7 +82,6 @@ class BlockYellowPiece(Piece):
         pass
 
 
-# Instances
 PIECES = (
     LOrangePiece,
     LCyanPiece,
