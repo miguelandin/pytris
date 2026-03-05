@@ -9,8 +9,8 @@
 ---
 ### Installation
 ```bash
-git clone https://github.com/miguelandin/tetris-py.git
-cd tetris-py
+git clone https://github.com/miguelandin/pytris.git
+cd pytris
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
