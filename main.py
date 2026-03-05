@@ -16,42 +16,69 @@ def draw_board(board: list[list], screen: pygame.Surface):
                 continue
             color = cf.COLORS[board[row][col]]
             block = pygame.Rect(
-                (col + cf.MARGIN_SIZE) * cf.BLOCK_SIZE, row *
-                cf.BLOCK_SIZE, cf.BLOCK_SIZE, cf.BLOCK_SIZE)
+                (col + cf.MARGIN_SIZE) * cf.BLOCK_SIZE,
+                row * cf.BLOCK_SIZE,
+                cf.BLOCK_SIZE,
+                cf.BLOCK_SIZE,
+            )
             pygame.draw.rect(screen, color, block)
 
 
 def draw_border(screen: pygame.Surface):
     left_border = pygame.Rect(
-        (cf.MARGIN_SIZE*cf.BLOCK_SIZE), 0, cf.BORDER_WIDTH, cf.SCREEN_HEIGHT)
+        (cf.MARGIN_SIZE * cf.BLOCK_SIZE), 0, cf.BORDER_WIDTH, cf.SCREEN_HEIGHT
+    )
 
     right_border = pygame.Rect(
-        ((cf.MARGIN_SIZE+cf.BOARD_WIDTH)*cf.BLOCK_SIZE), 0, cf.BORDER_WIDTH, cf.SCREEN_HEIGHT)
+        ((cf.MARGIN_SIZE + cf.BOARD_WIDTH) * cf.BLOCK_SIZE),
+        0,
+        cf.BORDER_WIDTH,
+        cf.SCREEN_HEIGHT,
+    )
 
     pygame.draw.rect(screen, cf.WHITE, left_border)
     pygame.draw.rect(screen, cf.WHITE, right_border)
 
 
 def draw_piece(blocks: tuple, color: tuple, screen: pygame.Surface, coords: tuple):
+    superficie_pieza: pygame.Surface = pygame.Surface(
+        screen.get_size(), pygame.SRCALPHA
+    )
     for x, y in blocks:
-        block = pygame.Rect((x + coords[0]) * cf.BLOCK_SIZE, (y + coords[1]) * cf.BLOCK_SIZE,
-                            cf.BLOCK_SIZE, cf.BLOCK_SIZE)
-        pygame.draw.rect(screen, color, block)
+        block = pygame.Rect(
+            (x + coords[0]) * cf.BLOCK_SIZE,
+            (y + coords[1]) * cf.BLOCK_SIZE,
+            cf.BLOCK_SIZE,
+            cf.BLOCK_SIZE,
+        )
+        pygame.draw.rect(superficie_pieza, color, block)
+    mask = pygame.mask.from_surface(superficie_pieza)
+    borde = mask.outline()
+    screen.blit(superficie_pieza, (0, 0))
+    pygame.draw.polygon(screen, (255, 255, 255), borde, 3)
 
 
 def draw_hold(hold_piece, screen: pygame.Surface):
     if hold_piece:
         blocks = hold_piece.INIT_COORDS
         draw_piece(
-            blocks, cf.COLORS[cf.TILES[hold_piece.COLOR]], screen, (logics.center_piece(blocks), cf.MARGIN_TOP))
+            blocks,
+            cf.COLORS[cf.TILES[hold_piece.COLOR]],
+            screen,
+            (logics.center_piece(blocks), cf.MARGIN_TOP),
+        )
 
 
 def draw_next_pieces(pieces: list, screen: pygame.Surface):
     margin_top = cf.MARGIN_TOP
     for piece in pieces[:5]:
         blocks = piece.INIT_COORDS
-        draw_piece(blocks, cf.COLORS[cf.TILES[piece.COLOR]], screen,
-                   (cf.MARGIN_SIZE + cf.BOARD_WIDTH + logics.center_piece(blocks), margin_top))
+        draw_piece(
+            blocks,
+            cf.COLORS[cf.TILES[piece.COLOR]],
+            screen,
+            (cf.MARGIN_SIZE + cf.BOARD_WIDTH + logics.center_piece(blocks), margin_top),
+        )
         margin_top += 3
 
 
@@ -88,14 +115,13 @@ buffer = ctx.buffer(data=array("f", [
 ]))
 # fmt: on
 
-with open('shaders/background.vert', 'r', encoding='utf-8') as file:
+with open("shaders/background.vert", "r", encoding="utf-8") as file:
     vertex_shader = file.read()
 
-with open('shaders/background.frag', 'r', encoding='utf-8') as file:
+with open("shaders/background.frag", "r", encoding="utf-8") as file:
     fragment_shader = file.read()
 
-program = ctx.program(vertex_shader=vertex_shader,
-                      fragment_shader=fragment_shader)
+program = ctx.program(vertex_shader=vertex_shader, fragment_shader=fragment_shader)
 render_object = ctx.vertex_array(
     program, [(buffer, "2f 2f", "vertex", "screen_coords")]
 )
@@ -130,8 +156,7 @@ while True:
                         hold_piece = temp_piece
                     else:
                         hold_piece = type(piece)
-                        piece, restart = logics.get_random_piece(
-                            pieces, PIECES, board)
+                        piece, restart = logics.get_random_piece(pieces, PIECES, board)
                     can_swap = False
             elif event.key in (pygame.K_LEFT, pygame.K_RIGHT, pygame.K_DOWN):
                 current_direction = event.key
@@ -151,7 +176,11 @@ while True:
 
     if current_direction:
         current_time = pygame.time.get_ticks()
-        delay_needed = cf.DAS_REPEAT if das_activate or current_direction == pygame.K_DOWN else cf.DAS_DELAY
+        delay_needed = (
+            cf.DAS_REPEAT
+            if das_activate or current_direction == pygame.K_DOWN
+            else cf.DAS_DELAY
+        )
 
         if current_time - das_timer > delay_needed:
             if current_direction == pygame.K_LEFT:
@@ -184,10 +213,12 @@ while True:
 
     display.fill((0, 0, 0, 0))
     draw_board(board, display)
-    draw_piece(logics.calculate_end_coords(piece, board),
-               cf.GREY, display, cf.PIECE_POS)
-    draw_piece(piece.piece_blocks,
-               cf.COLORS[cf.TILES[piece.COLOR]], display, cf.PIECE_POS)
+    draw_piece(
+        logics.calculate_end_coords(piece, board), cf.GREY, display, cf.PIECE_POS
+    )
+    draw_piece(
+        piece.piece_blocks, cf.COLORS[cf.TILES[piece.COLOR]], display, cf.PIECE_POS
+    )
     draw_border(display)
     draw_hold(hold_piece, display)
     draw_next_pieces(pieces, display)
@@ -196,7 +227,9 @@ while True:
     display_texture.use(0)
     program["iTime"] = pygame.time.get_ticks() / 1000.0
     program["iResolution"] = (
-        cf.BOARD_WIDTH*cf.BLOCK_SIZE, cf.BOARD_HEIGHT*cf.BLOCK_SIZE)
+        cf.BOARD_WIDTH * cf.BLOCK_SIZE,
+        cf.BOARD_HEIGHT * cf.BLOCK_SIZE,
+    )
     program["display"] = 0
     render_object.render(moderngl.TRIANGLE_STRIP)
 
