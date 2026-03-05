@@ -1,4 +1,4 @@
-# Tetris v2
+# PyTris
 ---
 ### Controls
 ```txt
