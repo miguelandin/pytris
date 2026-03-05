@@ -45,12 +45,12 @@ class Piece:
 
 
 class LOrangePiece(Piece):
-    INIT_COORDS = ((1, 1), (0, 1), (2, 1), (2, 0))
+    INIT_COORDS = ((1, 0), (0, 0), (0, 1), (2, 0))
     COLOR = "ORANGE"
 
 
 class LCyanPiece(Piece):
-    INIT_COORDS = ((1, 1), (0, 1), (2, 1), (0, 0))
+    INIT_COORDS = ((1, 0), (0, 0), (2, 0), (2, 1))
     COLOR = "CYAN"
 
 
@@ -65,7 +65,7 @@ class SkewRedPiece(Piece):
 
 
 class TPurplePiece(Piece):
-    INIT_COORDS = ((1, 1), (0, 1), (2, 1), (1, 0))
+    INIT_COORDS = ((1, 0), (0, 0), (1, 1), (2, 0))
     COLOR = "PURPLE"
 
 

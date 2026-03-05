@@ -1,19 +1,24 @@
 # pieces init coords
-L_ORANGE_PIECE = ((1, 1), (0, 1), (2, 1), (2, 0))
-L_CYAN_PIECE = ((1, 1), (0, 1), (2, 1), (0, 0))
+"""
+L_ORANGE_PIECE = ((1, 0), (0, 0), (0, 1), (2, 0))
+L_CYAN_PIECE = ((1, 0), (0, 0), (2, 0), (2, 1))
 SKEW_GREEN_PIECE = ((1, 1), (0, 1), (1, 0), (2, 0))
 SKEW_RED_PIECE = ((1, 1), (0, 0), (1, 0), (2, 1))
-T_PURPLE_PIECE = ((1, 1), (0, 1), (2, 1), (1, 0))
+T_PURPLE_PIECE = ((1, 0), (0, 0), (1, 1), (2, 0))
 I_BLUE_PIECE = ((1, 0), (0, 0), (2, 0), (3, 0))
 BLOCK_YELLOW_PIECE = ((0, 0), (1, 0), (0, 1), (1, 1))
+"""
 
 # map
 BOARD_WIDTH = 10
 BOARD_HEIGHT = 20
 
 # pygame
-BLOCK_SIZE = 50
+BLOCK_SIZE = 35
 MARGIN_SIZE = 5
+BORDER_WIDTH = 2
+MARGIN_POS = (1, 1)
+PIECE_POS = (MARGIN_SIZE, 0)
 SCREEN_WIDTH = ((MARGIN_SIZE * 2) + BOARD_WIDTH) * BLOCK_SIZE
 SCREEN_HEIGHT = BOARD_HEIGHT * BLOCK_SIZE
 

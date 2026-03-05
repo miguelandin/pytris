@@ -23,10 +23,10 @@ def draw_board(board: list[list], screen: pygame.Surface):
 
 def draw_border(screen: pygame.Surface):
     left_border = pygame.Rect(
-        (cf.MARGIN_SIZE*cf.BLOCK_SIZE), 0, 1, cf.SCREEN_HEIGHT)
+        (cf.MARGIN_SIZE*cf.BLOCK_SIZE), 0, cf.BORDER_WIDTH, cf.SCREEN_HEIGHT)
 
     right_border = pygame.Rect(
-        ((cf.MARGIN_SIZE+cf.BOARD_WIDTH)*cf.BLOCK_SIZE), 0, 1, cf.SCREEN_HEIGHT)
+        ((cf.MARGIN_SIZE+cf.BOARD_WIDTH)*cf.BLOCK_SIZE), 0, cf.BORDER_WIDTH, cf.SCREEN_HEIGHT)
 
     pygame.draw.rect(screen, cf.WHITE, left_border)
     pygame.draw.rect(screen, cf.WHITE, right_border)
@@ -42,7 +42,7 @@ def draw_piece(blocks: tuple, color: tuple, screen: pygame.Surface, coords: tupl
 def draw_hold(hold_piece, screen: pygame.Surface):
     if hold_piece:
         draw_piece(
-            hold_piece.INIT_COORDS, cf.COLORS[cf.TILES[hold_piece.COLOR]], screen, (1, 1))
+            hold_piece.INIT_COORDS, cf.COLORS[cf.TILES[hold_piece.COLOR]], screen, cf.MARGIN_POS)
 
 
 def draw_next_pieces(pieces: list, screen: pygame.Surface):
@@ -183,9 +183,9 @@ while True:
     display.fill((0, 0, 0, 0))
     draw_board(board, display)
     draw_piece(logics.calculate_end_coords(piece, board),
-               cf.GREY, display, (5, 0))
+               cf.GREY, display, cf.PIECE_POS)
     draw_piece(piece.piece_blocks,
-               cf.COLORS[cf.TILES[piece.COLOR]], display, (5, 0))
+               cf.COLORS[cf.TILES[piece.COLOR]], display, cf.PIECE_POS)
     draw_border(display)
     draw_hold(hold_piece, display)
     draw_next_pieces(pieces, display)
