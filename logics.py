@@ -81,3 +81,7 @@ def find_space(piece_blocks, board: list[list], iteration: int):
 def place_piece(piece: "Piece", board: list[list]):
     for x, y in piece.piece_blocks:
         board[y][x] = cf.TILES[piece.COLOR]
+
+
+def center_piece(blocks: tuple):
+    return (cf.MARGIN_SIZE - (blocks[-1][0]+1))/2

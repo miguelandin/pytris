@@ -41,15 +41,17 @@ def draw_piece(blocks: tuple, color: tuple, screen: pygame.Surface, coords: tupl
 
 def draw_hold(hold_piece, screen: pygame.Surface):
     if hold_piece:
+        blocks = hold_piece.INIT_COORDS
         draw_piece(
-            hold_piece.INIT_COORDS, cf.COLORS[cf.TILES[hold_piece.COLOR]], screen, cf.MARGIN_POS)
+            blocks, cf.COLORS[cf.TILES[hold_piece.COLOR]], screen, (logics.center_piece(blocks), cf.MARGIN_TOP))
 
 
 def draw_next_pieces(pieces: list, screen: pygame.Surface):
-    margin_top = 1
+    margin_top = cf.MARGIN_TOP
     for piece in pieces[:5]:
-        draw_piece(piece.INIT_COORDS, cf.COLORS[cf.TILES[piece.COLOR]], screen,
-                   (cf.MARGIN_SIZE + cf.BOARD_WIDTH + 1, margin_top))
+        blocks = piece.INIT_COORDS
+        draw_piece(blocks, cf.COLORS[cf.TILES[piece.COLOR]], screen,
+                   (cf.MARGIN_SIZE + cf.BOARD_WIDTH + logics.center_piece(blocks), margin_top))
         margin_top += 3
 
 
