@@ -15,10 +15,7 @@ def draw_board(board: list[list], screen: pygame.Surface):
             if board[row][col] == 0:
                 continue
             color = cf.COLORS[board[row][col]]
-            block = pygame.Rect(
-                (col + cf.MARGIN_SIZE) * cf.BLOCK_SIZE, row *
-                cf.BLOCK_SIZE, cf.BLOCK_SIZE, cf.BLOCK_SIZE)
-            pygame.draw.rect(screen, color, block)
+            draw_piece([(col, row)], color, screen, (cf.MARGIN_SIZE, 0))
 
 
 def draw_border(screen: pygame.Surface):
@@ -32,11 +29,16 @@ def draw_border(screen: pygame.Surface):
     pygame.draw.rect(screen, cf.WHITE, right_border)
 
 
-def draw_piece(blocks: tuple, color: tuple, screen: pygame.Surface, coords: tuple):
+def draw_piece(blocks, color: tuple, screen: pygame.Surface, coords: tuple):
+    darker_color = tuple((max(0, i-cf.DARKEN) for i in color))
+
     for x, y in blocks:
-        block = pygame.Rect((x + coords[0]) * cf.BLOCK_SIZE, (y + coords[1]) * cf.BLOCK_SIZE,
-                            cf.BLOCK_SIZE, cf.BLOCK_SIZE)
+        block = pygame.Rect((x + coords[0]) * cf.BLOCK_SIZE,
+                            (y + coords[1]) * cf.BLOCK_SIZE,
+                            cf.BLOCK_SIZE,
+                            cf.BLOCK_SIZE)
         pygame.draw.rect(screen, color, block)
+        pygame.draw.rect(screen, darker_color, block, cf.BLOCK_BORDER)
 
 
 def draw_hold(hold_piece, screen: pygame.Surface):
@@ -62,6 +64,7 @@ screen = pygame.display.set_mode(
 )
 pygame.display.set_caption("tetris-py")
 clock = pygame.time.Clock()
+font = pygame.font.Font(None, 50)
 running = True
 
 time = 0
@@ -102,7 +105,6 @@ render_object = ctx.vertex_array(
 display_texture = ctx.texture(display.get_size(), 4, display.get_view("1"))
 display_texture.swizzle = "BGRA"
 display_texture.filter = (moderngl.NEAREST, moderngl.NEAREST)
-
 
 while True:
     for event in pygame.event.get():
