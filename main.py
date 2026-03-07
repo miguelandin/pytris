@@ -25,6 +25,10 @@ def draw_border(screen: pygame.Surface):
     right_border = pygame.Rect(
         ((cf.MARGIN_SIZE+cf.BOARD_WIDTH)*cf.BLOCK_SIZE), 0, cf.BORDER_WIDTH, cf.SCREEN_HEIGHT)
 
+    top_border = pygame.Rect(
+        (cf.MARGIN_SIZE*cf.BLOCK_SIZE), cf.TOP_BUFFER*cf.BLOCK_SIZE, cf.BOARD_WIDTH*cf.BLOCK_SIZE, cf.BORDER_WIDTH)
+
+    pygame.draw.rect(screen, cf.WHITE, top_border)
     pygame.draw.rect(screen, cf.WHITE, left_border)
     pygame.draw.rect(screen, cf.WHITE, right_border)
 
@@ -67,7 +71,7 @@ clock = pygame.time.Clock()
 font = pygame.font.Font(None, 50)
 running = True
 
-time = 0
+time = pygame.time.get_ticks()
 das_timer = 0
 das_activate = False
 current_direction = None
@@ -78,6 +82,8 @@ piece: Piece
 restart: bool
 piece, restart = logics.get_random_piece(pieces, PIECES, board)
 hold_piece = None
+level = cf.START_LEVEL
+fall_time = logics.calculate_fall_time(level)
 
 display = pygame.Surface(screen.get_size(), pygame.SRCALPHA)
 ctx = moderngl.create_context()
@@ -119,11 +125,11 @@ while True:
                 piece.insta_down(board)
                 logics.place_piece(piece, board)
                 piece, restart = logics.get_random_piece(pieces, PIECES, board)
-                time = 0
+                time = pygame.time.get_ticks()
                 placed = True
             elif event.key == pygame.K_UP:
                 piece.rotate(board)
-                time = 0
+                time = pygame.time.get_ticks()
             elif event.key == pygame.K_c:
                 if can_swap:
                     if hold_piece:
@@ -145,7 +151,7 @@ while True:
                     piece.move_right(board)
                 elif event.key == pygame.K_DOWN:
                     if not piece.move_down(board):
-                        time = 0
+                        time = pygame.time.get_ticks()
 
         if event.type == pygame.KEYUP:
             if event.key == current_direction:
@@ -162,18 +168,18 @@ while True:
                 piece.move_right(board)
             elif current_direction == pygame.K_DOWN:
                 if not piece.move_down(board):
-                    time = 0
+                    time = pygame.time.get_ticks()
 
             das_timer = current_time
             das_activate = True
 
-    if time > cf.FALL_TIMER:
+    if pygame.time.get_ticks() - time > fall_time:
         if piece.move_down(board):
             logics.place_piece(piece, board)
             piece, restart = logics.get_random_piece(pieces, PIECES, board)
             placed = True
 
-        time = 0
+        time = pygame.time.get_ticks()
 
     if placed:
         logics.clear_lines(board, logics.find_lines(board))
@@ -204,4 +210,3 @@ while True:
 
     pygame.display.flip()
     clock.tick(60)
-    time += 1

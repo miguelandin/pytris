@@ -85,3 +85,7 @@ def place_piece(piece: "Piece", board: list[list]):
 
 def center_piece(blocks: tuple):
     return (cf.MARGIN_SIZE - (blocks[-1][0]+1))/2
+
+
+def calculate_fall_time(level: int):
+    return int(((0.8-((level-1)*0.007))**(level-1))*1000)
