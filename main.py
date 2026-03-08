@@ -83,6 +83,7 @@ restart: bool
 piece, restart = logics.get_random_piece(pieces, PIECES, board)
 hold_piece = None
 level = cf.START_LEVEL
+cleared_lines = 0
 fall_time = logics.calculate_fall_time(level)
 
 display = pygame.Surface(screen.get_size(), pygame.SRCALPHA)
@@ -182,13 +183,21 @@ while True:
         time = pygame.time.get_ticks()
 
     if placed:
-        logics.clear_lines(board, logics.find_lines(board))
+        lines_to_clear, lines_count = logics.find_lines(board)
+        logics.clear_lines(board, lines_to_clear)
+        cleared_lines += lines_count
         placed = False
         can_swap = True
+
+        if cleared_lines > cf.LINES_PER_LEVEL * level:
+            level += 1
+            fall_time = logics.calculate_fall_time(level)
 
     if restart:
         board = logics.new_board()
         piece, restart = logics.get_random_piece(pieces, PIECES, board)
+        level = cf.START_LEVEL
+        fall_time = logics.calculate_fall_time(level)
 
     display.fill((0, 0, 0, 0))
     draw_board(board, display)
@@ -209,4 +218,4 @@ while True:
     render_object.render(moderngl.TRIANGLE_STRIP)
 
     pygame.display.flip()
-    clock.tick(60)
+    clock.tick(90)

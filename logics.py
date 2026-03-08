@@ -29,7 +29,7 @@ def find_lines(board: list[list]):
         if line is True:
             lines.append(row)
 
-    return tuple(lines)
+    return tuple(lines), len(lines)
 
 
 def get_random_piece(queue: list, pieces: tuple, board: list[list]):
