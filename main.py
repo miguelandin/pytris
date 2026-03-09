@@ -18,23 +18,33 @@ def draw_board(board: list[list], screen: pygame.Surface):
             draw_piece([(col, row)], color, screen, (cf.MARGIN_SIZE, 0))
 
 
-def draw_border(screen: pygame.Surface):
+def draw_borders(screen: pygame.Surface, layer: pygame.Surface):
     left_border = pygame.Rect(
         (cf.MARGIN_SIZE*cf.BLOCK_SIZE), 0, cf.BORDER_WIDTH, cf.SCREEN_HEIGHT)
 
     right_border = pygame.Rect(
-        ((cf.MARGIN_SIZE+cf.BOARD_WIDTH)*cf.BLOCK_SIZE), 0, cf.BORDER_WIDTH, cf.SCREEN_HEIGHT)
+        ((cf.MARGIN_SIZE+cf.BOARD_WIDTH)*cf.BLOCK_SIZE), 0, cf.BORDER_WIDTH,
+        cf.SCREEN_HEIGHT)
 
-    top_border = pygame.Rect(
-        (cf.MARGIN_SIZE*cf.BLOCK_SIZE), cf.TOP_BUFFER*cf.BLOCK_SIZE, cf.BOARD_WIDTH*cf.BLOCK_SIZE, cf.BORDER_WIDTH)
+    top_bar = pygame.Rect(
+        cf.MARGIN_SIZE*cf.BLOCK_SIZE+cf.BORDER_WIDTH,
+        cf.TOP_BUFFER*cf.BLOCK_SIZE,
+        cf.BOARD_WIDTH*cf.BLOCK_SIZE-cf.BORDER_WIDTH,
+        cf.BORDER_WIDTH)
 
-    pygame.draw.rect(screen, cf.WHITE, top_border)
+    background = pygame.Rect(
+        cf.MARGIN_SIZE*cf.BLOCK_SIZE+cf.BORDER_WIDTH, 0,
+        cf.BOARD_WIDTH*cf.BLOCK_SIZE-cf.BORDER_WIDTH,
+        cf.BOARD_HEIGHT*cf.BLOCK_SIZE)
+
     pygame.draw.rect(screen, cf.WHITE, left_border)
     pygame.draw.rect(screen, cf.WHITE, right_border)
+    pygame.draw.rect(screen, (*cf.WHITE, cf.OPACITY), top_bar)
+    pygame.draw.rect(layer, (*cf.BLACK, cf.OPACITY), background)
 
 
 def draw_piece(blocks, color: tuple, screen: pygame.Surface, coords: tuple):
-    darker_color = tuple((max(0, i-cf.DARKEN) for i in color))
+    darker_color = tuple((max(0, i-cf.DARKEN) for i in color[:3]))
 
     for x, y in blocks:
         block = pygame.Rect((x + coords[0]) * cf.BLOCK_SIZE,
@@ -43,6 +53,15 @@ def draw_piece(blocks, color: tuple, screen: pygame.Surface, coords: tuple):
                             cf.BLOCK_SIZE)
         pygame.draw.rect(screen, color, block)
         pygame.draw.rect(screen, darker_color, block, cf.BLOCK_BORDER)
+
+
+def draw_shadow(blocks, color: tuple, screen: pygame.Surface, coords: tuple):
+    for x, y in blocks:
+        block = pygame.Rect((x + coords[0]) * cf.BLOCK_SIZE,
+                            (y + coords[1]) * cf.BLOCK_SIZE,
+                            cf.BLOCK_SIZE,
+                            cf.BLOCK_SIZE)
+        pygame.draw.rect(screen, color, block, cf.BLOCK_BORDER)
 
 
 def draw_hold(hold_piece, screen: pygame.Surface):
@@ -87,6 +106,8 @@ cleared_lines = 0
 fall_time = logics.calculate_fall_time(level)
 
 display = pygame.Surface(screen.get_size(), pygame.SRCALPHA)
+back_layer = pygame.Surface(
+    (cf.SCREEN_WIDTH, cf.SCREEN_HEIGHT), pygame.SRCALPHA)
 ctx = moderngl.create_context()
 
 # fmt: off
@@ -200,12 +221,14 @@ while True:
         fall_time = logics.calculate_fall_time(level)
 
     display.fill((0, 0, 0, 0))
+    back_layer.fill((0, 0, 0, 0))
+    draw_borders(display, back_layer)
+    display.blit(back_layer, (0, 0))
     draw_board(board, display)
-    draw_piece(logics.calculate_end_coords(piece, board),
-               cf.GREY, display, cf.PIECE_POS)
+    draw_shadow(logics.calculate_end_coords(piece, board),
+                (*cf.GREY, cf.OPACITY), display, cf.PIECE_POS)
     draw_piece(piece.piece_blocks,
                cf.COLORS[cf.TILES[piece.COLOR]], display, cf.PIECE_POS)
-    draw_border(display)
     draw_hold(hold_piece, display)
     draw_next_pieces(pieces, display)
 

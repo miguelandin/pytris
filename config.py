@@ -46,6 +46,7 @@ BLUE = (0, 0, 255)
 YELLOW = (255, 255, 0)
 GREY = (85, 85, 85)
 DARKEN = 25
+OPACITY = 128
 
 TILES = {
     "SPACE": 0,
