@@ -20,16 +20,16 @@ def draw_board(board: list[list], screen: pygame.Surface):
 
 def draw_borders(screen: pygame.Surface, layer: pygame.Surface):
     left_border = pygame.Rect(
-        (cf.MARGIN_SIZE*cf.BLOCK_SIZE), 0, cf.BORDER_WIDTH, cf.SCREEN_HEIGHT)
+        (cf.MARGIN_SIZE*cf.BLOCK_SIZE)-cf.BORDER_WIDTH, 0, cf.BORDER_WIDTH, cf.SCREEN_HEIGHT)
 
     right_border = pygame.Rect(
         ((cf.MARGIN_SIZE+cf.BOARD_WIDTH)*cf.BLOCK_SIZE), 0, cf.BORDER_WIDTH,
         cf.SCREEN_HEIGHT)
 
     top_bar = pygame.Rect(
-        cf.MARGIN_SIZE*cf.BLOCK_SIZE+cf.BORDER_WIDTH,
+        cf.MARGIN_SIZE*cf.BLOCK_SIZE,
         cf.TOP_BUFFER*cf.BLOCK_SIZE,
-        cf.BOARD_WIDTH*cf.BLOCK_SIZE-cf.BORDER_WIDTH,
+        cf.BOARD_WIDTH*cf.BLOCK_SIZE,
         cf.BORDER_WIDTH)
 
     background = pygame.Rect(
@@ -92,7 +92,7 @@ running = True
 
 time = pygame.time.get_ticks()
 das_timer = 0
-das_activate = False
+das_activate: bool = False
 current_direction = None
 placed = False
 can_swap = True
@@ -101,7 +101,7 @@ piece: Piece
 restart: bool
 piece, restart = logics.get_random_piece(pieces, PIECES, board)
 hold_piece = None
-level = cf.START_LEVEL
+level: int = cf.START_LEVEL
 cleared_lines = 0
 fall_time = logics.calculate_fall_time(level)
 
@@ -217,6 +217,7 @@ while True:
     if restart:
         board = logics.new_board()
         piece, restart = logics.get_random_piece(pieces, PIECES, board)
+        cleared_lines = 0
         level = cf.START_LEVEL
         fall_time = logics.calculate_fall_time(level)
 
