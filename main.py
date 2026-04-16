@@ -87,7 +87,7 @@ screen = pygame.display.set_mode(
 )
 pygame.display.set_caption("tetris-py")
 clock = pygame.time.Clock()
-font = pygame.font.Font(None, 50)
+font = pygame.font.Font(None, cf.FONT_SIZE)
 running = True
 
 time = pygame.time.get_ticks()
@@ -104,6 +104,8 @@ hold_piece = None
 level: int = cf.START_LEVEL
 cleared_lines = 0
 fall_time = logics.calculate_fall_time(level)
+combo: int = 0
+score: int = 0
 
 display = pygame.Surface(screen.get_size(), pygame.SRCALPHA)
 back_layer = pygame.Surface(
@@ -210,9 +212,14 @@ while True:
         placed = False
         can_swap = True
 
-        if cleared_lines > cf.LINES_PER_LEVEL * level:
-            level += 1
-            fall_time = logics.calculate_fall_time(level)
+        if lines_count > 0:
+            score += logics.calculate_score(level, combo, lines_count)
+            combo += 1
+            if cleared_lines >= cf.LINES_PER_LEVEL * level:
+                level += 1
+                fall_time = logics.calculate_fall_time(level)
+        else:
+            combo = 0
 
     if restart:
         board = logics.new_board()
@@ -243,3 +250,5 @@ while True:
 
     pygame.display.flip()
     clock.tick(90)
+    print(f"combo: {combo}, cleared: {
+          cleared_lines}, level: {level}, score: {score}")

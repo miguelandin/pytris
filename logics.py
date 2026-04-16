@@ -4,6 +4,7 @@ import config as cf
 
 if TYPE_CHECKING:
     from pieces import Piece
+    import pygame
 
 
 def new_board():
@@ -89,3 +90,28 @@ def center_piece(blocks: tuple):
 
 def calculate_fall_time(level: int):
     return int(((0.8-((level-1)*0.007))**(level-1))*1000)
+
+
+def calculate_score(level: int, combo: int, lines: int):
+    combo_score = 50*combo*level
+    line_score = cf.SCORES[lines] * level
+    return combo_score + line_score
+
+
+def render_outlined(
+    font: pygame.Font,
+    text: str,
+    text_color: pygame.typing.ColorLike,
+    outline_color: pygame.typing.ColorLike,
+    outline_width: int,
+) -> pygame.Surface:
+    old_outline = font.outline
+    if old_outline != 0:
+        font.outline = 0
+    base_text_surf = font.render(text, True, text_color)
+    font.outline = outline_width
+    outlined_text_surf = font.render(text, True, outline_color)
+
+    outlined_text_surf.blit(base_text_surf, (outline_width, outline_width))
+    font.outline = old_outline
+    return outlined_text_surf
