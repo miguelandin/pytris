@@ -8,78 +8,6 @@ from pieces import Piece, PIECES
 
 board = logics.new_board()
 
-
-def draw_board(board: list[list], screen: pygame.Surface):
-    for row in range(len(board)):
-        for col in range(len(board[row])):
-            if board[row][col] == 0:
-                continue
-            color = cf.COLORS[board[row][col]]
-            draw_piece([(col, row)], color, screen, (cf.MARGIN_SIZE, 0))
-
-
-def draw_borders(screen: pygame.Surface, layer: pygame.Surface):
-    left_border = pygame.Rect(
-        (cf.MARGIN_SIZE*cf.BLOCK_SIZE)-cf.BORDER_WIDTH, 0, cf.BORDER_WIDTH, cf.SCREEN_HEIGHT)
-
-    right_border = pygame.Rect(
-        ((cf.MARGIN_SIZE+cf.BOARD_WIDTH)*cf.BLOCK_SIZE), 0, cf.BORDER_WIDTH,
-        cf.SCREEN_HEIGHT)
-
-    top_bar = pygame.Rect(
-        cf.MARGIN_SIZE*cf.BLOCK_SIZE,
-        cf.TOP_BUFFER*cf.BLOCK_SIZE,
-        cf.BOARD_WIDTH*cf.BLOCK_SIZE,
-        cf.BORDER_WIDTH)
-
-    background = pygame.Rect(
-        cf.MARGIN_SIZE*cf.BLOCK_SIZE+cf.BORDER_WIDTH, 0,
-        cf.BOARD_WIDTH*cf.BLOCK_SIZE-cf.BORDER_WIDTH,
-        cf.BOARD_HEIGHT*cf.BLOCK_SIZE)
-
-    pygame.draw.rect(screen, cf.WHITE, left_border)
-    pygame.draw.rect(screen, cf.WHITE, right_border)
-    pygame.draw.rect(screen, (*cf.WHITE, cf.OPACITY), top_bar)
-    pygame.draw.rect(layer, (*cf.BLACK, cf.OPACITY), background)
-
-
-def draw_piece(blocks, color: tuple, screen: pygame.Surface, coords: tuple):
-    darker_color = tuple((max(0, i-cf.DARKEN) for i in color[:3]))
-
-    for x, y in blocks:
-        block = pygame.Rect((x + coords[0]) * cf.BLOCK_SIZE,
-                            (y + coords[1]) * cf.BLOCK_SIZE,
-                            cf.BLOCK_SIZE,
-                            cf.BLOCK_SIZE)
-        pygame.draw.rect(screen, color, block)
-        pygame.draw.rect(screen, darker_color, block, cf.BLOCK_BORDER)
-
-
-def draw_shadow(blocks, color: tuple, screen: pygame.Surface, coords: tuple):
-    for x, y in blocks:
-        block = pygame.Rect((x + coords[0]) * cf.BLOCK_SIZE,
-                            (y + coords[1]) * cf.BLOCK_SIZE,
-                            cf.BLOCK_SIZE,
-                            cf.BLOCK_SIZE)
-        pygame.draw.rect(screen, color, block, cf.BLOCK_BORDER)
-
-
-def draw_hold(hold_piece, screen: pygame.Surface):
-    if hold_piece:
-        blocks = hold_piece.INIT_COORDS
-        draw_piece(
-            blocks, cf.COLORS[cf.TILES[hold_piece.COLOR]], screen, (logics.center_piece(blocks), cf.MARGIN_TOP))
-
-
-def draw_next_pieces(pieces: list, screen: pygame.Surface):
-    margin_top = cf.MARGIN_TOP
-    for piece in pieces[:5]:
-        blocks = piece.INIT_COORDS
-        draw_piece(blocks, cf.COLORS[cf.TILES[piece.COLOR]], screen,
-                   (cf.MARGIN_SIZE + cf.BOARD_WIDTH + logics.center_piece(blocks), margin_top))
-        margin_top += 3
-
-
 pygame.init()
 screen = pygame.display.set_mode(
     (cf.SCREEN_WIDTH, cf.SCREEN_HEIGHT),
@@ -106,6 +34,12 @@ cleared_lines = 0
 fall_time = logics.calculate_fall_time(level)
 combo: int = 0
 score: int = 0
+combo_0_render: pygame.Surface = logics.render_outlined(
+    font, str(0), cf.BLACK, cf.WHITE, cf.FONT_OUTLINE)
+combo_render: pygame.Surface = combo_0_render
+score_render: pygame.Surface = logics.render_outlined(
+    font, str(score), cf.BLACK, cf.WHITE, cf.FONT_OUTLINE)
+
 
 display = pygame.Surface(screen.get_size(), pygame.SRCALPHA)
 back_layer = pygame.Surface(
@@ -214,12 +148,17 @@ while True:
 
         if lines_count > 0:
             score += logics.calculate_score(level, combo, lines_count)
+            score_render = logics.render_outlined(
+                font, str(score), cf.BLACK, cf.WHITE, cf.FONT_OUTLINE)
             combo += 1
+            combo_render = logics.render_outlined(
+                font, str(combo), cf.BLACK, cf.WHITE, cf.FONT_OUTLINE)
             if cleared_lines >= cf.LINES_PER_LEVEL * level:
                 level += 1
                 fall_time = logics.calculate_fall_time(level)
         else:
             combo = 0
+            combo_render = combo_0_render
 
     if restart:
         board = logics.new_board()
@@ -230,15 +169,17 @@ while True:
 
     display.fill((0, 0, 0, 0))
     back_layer.fill((0, 0, 0, 0))
-    draw_borders(display, back_layer)
+    logics.draw_borders(display, back_layer)
     display.blit(back_layer, (0, 0))
-    draw_board(board, display)
-    draw_shadow(logics.calculate_end_coords(piece, board),
-                (*cf.GREY, cf.OPACITY), display, cf.PIECE_POS)
-    draw_piece(piece.piece_blocks,
-               cf.COLORS[cf.TILES[piece.COLOR]], display, cf.PIECE_POS)
-    draw_hold(hold_piece, display)
-    draw_next_pieces(pieces, display)
+    display.blit(score_render, cf.SCORE_POS)
+    display.blit(combo_render, (0, 500))
+    logics.draw_board(board, display)
+    logics.draw_shadow(logics.calculate_end_coords(piece, board),
+                       (*cf.GREY, cf.OPACITY), display, cf.PIECE_POS)
+    logics.draw_piece(piece.piece_blocks,
+                      cf.COLORS[cf.TILES[piece.COLOR]], display, cf.PIECE_POS)
+    logics.draw_hold(hold_piece, display)
+    logics.draw_next_pieces(pieces, display)
 
     display_texture.write(display.get_view("1"))
     display_texture.use(0)
