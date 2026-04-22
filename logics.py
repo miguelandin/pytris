@@ -186,3 +186,7 @@ def render_outlined(
     outlined_text_surf.blit(base_text_surf, (outline_width, outline_width))
     font.outline = old_outline
     return outlined_text_surf
+
+
+def center_text(text_render: pygame.Surface) -> float:
+    return (cf.BLOCK_SIZE*cf.MARGIN_SIZE)-text_render.get_width()

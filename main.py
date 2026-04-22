@@ -171,8 +171,10 @@ while True:
     back_layer.fill((0, 0, 0, 0))
     logics.draw_borders(display, back_layer)
     display.blit(back_layer, (0, 0))
-    display.blit(score_render, cf.SCORE_POS)
-    display.blit(combo_render, (0, 500))
+    display.blit(score_render,  (logics.center_text(
+        score_render), cf.BLOCK_SIZE*10))
+    display.blit(combo_render, (logics.center_text(
+        combo_render), cf.BLOCK_SIZE*15))
     logics.draw_board(board, display)
     logics.draw_shadow(logics.calculate_end_coords(piece, board),
                        (*cf.GREY, cf.OPACITY), display, cf.PIECE_POS)
