@@ -39,6 +39,8 @@ combo_0_render: pygame.Surface = logics.render_outlined(
 combo_render: pygame.Surface = combo_0_render
 score_render: pygame.Surface = logics.render_outlined(
     font, str(score), cf.BLACK, cf.WHITE, cf.FONT_OUTLINE)
+level_render: pygame.Surface = logics.render_outlined(
+    font, str(level), cf.BLACK, cf.WHITE, cf.FONT_OUTLINE)
 
 
 display = pygame.Surface(screen.get_size(), pygame.SRCALPHA)
@@ -155,6 +157,8 @@ while True:
                 font, str(combo), cf.BLACK, cf.WHITE, cf.FONT_OUTLINE)
             if cleared_lines >= cf.LINES_PER_LEVEL * level:
                 level += 1
+                level_render: pygame.Surface = logics.render_outlined(
+                    font, str(level), cf.BLACK, cf.WHITE, cf.FONT_OUTLINE)
                 fall_time = logics.calculate_fall_time(level)
         else:
             combo = 0
@@ -172,9 +176,11 @@ while True:
     logics.draw_borders(display, back_layer)
     display.blit(back_layer, (0, 0))
     display.blit(score_render,  (logics.center_text(
-        score_render), cf.BLOCK_SIZE*10))
+        score_render), cf.BLOCK_SIZE*16))
     display.blit(combo_render, (logics.center_text(
-        combo_render), cf.BLOCK_SIZE*15))
+        combo_render), cf.BLOCK_SIZE*17))
+    display.blit(level_render, (logics.center_text(
+        level_render), cf.BLOCK_SIZE*18))
     logics.draw_board(board, display)
     logics.draw_shadow(logics.calculate_end_coords(piece, board),
                        (*cf.GREY, cf.OPACITY), display, cf.PIECE_POS)
@@ -193,5 +199,3 @@ while True:
 
     pygame.display.flip()
     clock.tick(90)
-    print(f"combo: {combo}, cleared: {
-          cleared_lines}, level: {level}, score: {score}")
