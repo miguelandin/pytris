@@ -38,12 +38,12 @@ score: int = 0
 
 # Text Renders
 combo_0_render: pygame.Surface = logics.render_outlined(
-    font_medium, str(0), cf.BLACK, cf.WHITE, cf.FONT_OUTLINE_MEDIUM)
+    font_medium, str(0), cf.BLACK, cf.WHITE, cf.FONT_OUTLINE_SMALL)
 combo_render: pygame.Surface = combo_0_render
 score_render: pygame.Surface = logics.render_outlined(
-    font_medium, str(score), cf.BLACK, cf.WHITE, cf.FONT_OUTLINE_MEDIUM)
+    font_medium, str(score), cf.BLACK, cf.WHITE, cf.FONT_OUTLINE_SMALL)
 level_render: pygame.Surface = logics.render_outlined(
-    font_medium, str(level), cf.BLACK, cf.WHITE, cf.FONT_OUTLINE_MEDIUM)
+    font_medium, str(level), cf.BLACK, cf.WHITE, cf.FONT_OUTLINE_SMALL)
 score_text_render: pygame.Surface = (logics.render_outlined(
     font_small, "Score: ", cf.BLACK, cf.WHITE, cf.FONT_OUTLINE_SMALL))
 combo_text_render: pygame.Surface = (logics.render_outlined(
